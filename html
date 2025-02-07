@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章校正ツール</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        textarea {
+            width: 80%;
+            height: 150px;
+        }
+        .suggestion {
+            display: inline-block;
+            background-color: yellow;
+            cursor: pointer;
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        .buttons button {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>文章校正ツール</h1>
+    <textarea id="text-input" placeholder="文章を入力してください"></textarea>
+    <br>
+    <button onclick="checkText()">修正提案を表示</button>
+    
+    <div id="suggestions"></div>
+
+    <script>
+        async function checkText() {
+            const textInput = document.getElementById('text-input').value;
+            
+            // バックエンドにリクエストを送信
+            const response = await fetch('http://127.0.0.1:5000/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: textInput })
+            });
+
+            const data = await response.json();
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = ''; // 提案の前に以前の内容をクリア
+
+            data.suggestions.forEach(suggestion => {
+                // 修正候補を表示
+                const suggestionSpan = document.createElement('span');
+                suggestionSpan.classList.add('suggestion');
+                suggestionSpan.innerText = suggestion.original;
+                suggestionSpan.onclick = () => applySuggestion(suggestion);
+                suggestionsDiv.appendChild(suggestionSpan);
+                suggestionsDiv.appendChild(document.createTextNode(' ')); // スペース
+            });
+        }
+
+        function applySuggestion(suggestion) {
+            const textInput = document.getElementById('text-input');
+            const newText = textInput.value.replace(suggestion.original, suggestion.suggestion);
+            textInput.value = newText; // 修正されたテキストを表示
+        }
+    </script>
+</body>
+</html>
